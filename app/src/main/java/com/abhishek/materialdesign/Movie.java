@@ -1,13 +1,14 @@
 package com.abhishek.materialdesign;
 
+import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 
 /**
  * Created by sony on 02-09-2016.
  */
-
-public class Movie {
+@SuppressWarnings("serial") //With this annotation we are going to hide compiler warnings
+public class Movie implements Serializable {
     String poster_path;
     boolean adult;
     String overview;

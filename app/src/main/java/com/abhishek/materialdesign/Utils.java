@@ -2,6 +2,10 @@ package com.abhishek.materialdesign;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -25,6 +29,31 @@ public class Utils {
         return (int) context.getResources().getDimension(R.dimen.tabsHeight);
     }
 
+    public static boolean networkConnectivity(Context context) {
+        ConnectivityManager cm = (ConnectivityManager) context
+                .getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = cm.getActiveNetworkInfo();
+        if (networkInfo != null && networkInfo.isConnected()) {
+            return true;
+        }
+        return false;
+    }
+
+    public static Bitmap getBitmapFromURL(String src) {
+        try {
+            URL url = new URL(src);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setDoInput(true);
+            connection.connect();
+            InputStream input = connection.getInputStream();
+            Bitmap myBitmap = BitmapFactory.decodeStream(input);
+            return myBitmap;
+        } catch (IOException e) {
+            // Log exception
+            return null;
+        }
+    }
+
     public static String sendGETRequest(String geturl){
         HttpURLConnection urlConnection = null;
         BufferedReader reader = null;
@@ -36,7 +65,6 @@ public class Utils {
 
             URL url = new URL(geturl);
 
-            // Create the request to OpenWeatherMap, and open the connection
             urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setRequestMethod("GET");
             urlConnection.connect();
@@ -62,7 +90,7 @@ public class Utils {
             JsonStr = buffer.toString();
             return JsonStr;
         } catch (IOException e) {
-            return null;
+            return "error";
         } finally{
             if (urlConnection != null) {
                 urlConnection.disconnect();

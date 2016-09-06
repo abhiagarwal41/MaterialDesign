@@ -17,7 +17,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -41,7 +43,15 @@ public class FirstFragment extends Fragment {
     private List<String> moviesImages = new ArrayList<>();
     private MoviesAdapter moviesAdapter;
     private GridLayoutManager gridLayoutManager;
-    private ProgressBar mPbar;
+    private ProgressBar mPbar , progressBarPaging;
+    private int visibleThreshold = 5;
+    int  visibleItemCount, totalItemCount, firstVisibleItem ;
+    static boolean loadingMore = true;
+    static boolean noMoreDataOnServer = false;
+    RecyclerViewPositionHelper mRecyclerViewHelper;
+    private int previousTotal = 0;
+    static Integer currentPage = 1;
+    List<Movie> movies = new LinkedList<Movie>();
 
 
     public FirstFragment() {
@@ -83,10 +93,50 @@ public class FirstFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_first, container, false);
         firstRecyclerView = (RecyclerView)view.findViewById(R.id.first_recycler_view);
         mPbar = (ProgressBar) view.findViewById(R.id.progress_bar);
+        progressBarPaging = (ProgressBar) view.findViewById(R.id.progress_bar_paging);
 
         gridLayoutManager = new GridLayoutManager(getActivity(),2);
         firstRecyclerView.setLayoutManager(gridLayoutManager);
-        new FetchMoviesData().execute("/movie/popular");
+        if(Utils.networkConnectivity(getActivity()))
+            new FetchMoviesData(currentPage).execute(Constants.GET_POPULAR_MOVIES);
+        else
+            MainActivity.showSnackbar("No internet connection");
+
+        firstRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener(){
+
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                // TODO Auto-generated method stub
+                super.onScrollStateChanged(recyclerView, newState);
+            }
+
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                if(recyclerView.getAdapter() != null && !noMoreDataOnServer){
+
+                    mRecyclerViewHelper = RecyclerViewPositionHelper.createHelper(recyclerView);
+                    visibleItemCount = recyclerView.getChildCount();
+                    totalItemCount = gridLayoutManager.getItemCount();
+                    firstVisibleItem = gridLayoutManager.findFirstVisibleItemPosition();
+
+                    if (loadingMore) {
+                        if (totalItemCount > previousTotal) {
+                            loadingMore = false;
+                            previousTotal = totalItemCount;
+                        }
+                    }
+
+                    if (!loadingMore && (totalItemCount - visibleItemCount) <= (firstVisibleItem + visibleThreshold)) {
+                        // End has been reached
+                        currentPage++;
+                        new FetchMoviesData(currentPage).execute(Constants.GET_POPULAR_MOVIES);
+                        loadingMore = true;
+                    }
+                }
+            }
+        });
+
         return view;
 
 
@@ -94,14 +144,22 @@ public class FirstFragment extends Fragment {
 
    private class FetchMoviesData extends AsyncTask<String,Void,String>{
 
+       int currentPage;
+
        public FetchMoviesData(){
            super();
+       }
+
+       public FetchMoviesData(int currentPage){
+           super();
+           this.currentPage = currentPage;
        }
 
        @Override
        protected String doInBackground(String... params) {
            String moviesType = params[0];
-           String url= Constants.BASE_URL + moviesType + "?api_key="+ Constants.MOVIEDB_API_KEY;
+           String url= Constants.BASE_URL + moviesType + "?api_key="+ Constants.MOVIEDB_API_KEY + "&page=" + currentPage;
+           System.out.println(url);
            String response = Utils.sendGETRequest(url);
            return response;
        }
@@ -109,15 +167,22 @@ public class FirstFragment extends Fragment {
        @Override
        protected void onPreExecute() {
            super.onPreExecute();
-           mPbar.setVisibility(View.VISIBLE);
+           if(currentPage==1)
+               mPbar.setVisibility(View.VISIBLE);
+           else
+               progressBarPaging.setVisibility(View.VISIBLE);
        }
 
        @Override
        protected void onPostExecute(String result) {
            super.onPostExecute(result);
-           mPbar.setVisibility(View.GONE);
+           if(currentPage==1)
+               mPbar.setVisibility(View.GONE);
+           else
+               progressBarPaging.setVisibility(View.GONE);
 
-           if (result != null && !"".equals(result)) {
+
+           if (result != null && !"".equals(result) && !"error".equals(result)) {
                try {
                    /*JSONObject jsonObj = new JSONObject(result);
                    JSONArray movies = jsonObj.getJSONArray("results");
@@ -126,15 +191,26 @@ public class FirstFragment extends Fragment {
                        moviesImages.add("http://image.tmdb.org/t/p/w185/" + movie.getString("poster_path"));
                    }*/
                    Response response = (new Gson()).fromJson(result, Response.class);
-                   List<Movie> movies = response.results;
-                   moviesAdapter = new MoviesAdapter(getActivity(),movies);
-                   firstRecyclerView.setAdapter(moviesAdapter);
+                   List<Movie> moviesReturned = response.results;
+                   if(moviesReturned.size()<20)
+                       noMoreDataOnServer = true;
+                   movies.addAll(moviesReturned);
+
+                   if(currentPage==1) {
+                       moviesAdapter = new MoviesAdapter(getActivity(), movies);
+                       firstRecyclerView.setAdapter(moviesAdapter);
+                   }
+                   else{
+                       moviesAdapter.setData(movies);
+                       moviesAdapter.notifyDataSetChanged();
+                   }
+
 
                }catch (Exception e){
                    e.printStackTrace();
                }
            }else{
-
+               MainActivity.showSnackbar("Internet connection problem");
            }
 
        }
