@@ -6,6 +6,7 @@ import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -25,15 +26,24 @@ public class SecondFragment extends Fragment {
         // Required empty public constructor
     }
 
+  /*  @Override
+    public void onPrepareOptionsMenu(Menu menu) {
+        menu.findItem(R.id.action_popular_movies).setVisible(false);
+        menu.findItem(R.id.action_toprated_movies).setVisible(false);
+        super.onPrepareOptionsMenu(menu);
+    }*/
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_second, container, false);
+        setHasOptionsMenu(false);
+
         secondRecyclerView = (RecyclerView)view.findViewById(R.id.second_recycler_view);
         secondRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        RecyclerAdapter recyclerAdapter = new RecyclerAdapter(createItemList());
+        RecyclerAdapter recyclerAdapter = new RecyclerAdapter(createItemList(),getActivity());
         secondRecyclerView.setAdapter(recyclerAdapter);
         return view;
     }

@@ -1,7 +1,13 @@
 <resources>
-    <string name="app_name">MaterialDesign</string>
+    <string name="app_name">Finest of Hollywood</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="transition_name">transition:NAME</string>
+    <string name="title_activity_home">Finest of Hollywood</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_settings">Settings</string>
 </resources>

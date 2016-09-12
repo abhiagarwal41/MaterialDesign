@@ -7,7 +7,11 @@ import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
@@ -52,6 +56,8 @@ public class FirstFragment extends Fragment {
     private int previousTotal = 0;
     static Integer currentPage = 1;
     List<Movie> movies = new LinkedList<Movie>();
+    private static String movieType = Constants.GET_POPULAR_MOVIES;
+    DBHandler dbHandler;
 
 
     public FirstFragment() {
@@ -76,6 +82,42 @@ public class FirstFragment extends Fragment {
         return fragment;
     }
 
+
+   /* @Override
+    public void onPrepareOptionsMenu(Menu menu) {
+        menu.findItem(R.id.action_popular_movies).setVisible(true);
+        menu.findItem(R.id.action_toprated_movies).setVisible(true);
+        super.onPrepareOptionsMenu(menu);
+    }*/
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if(item.getItemId()==R.id.action_popular_movies){
+            if(!movieType.equals(Constants.GET_POPULAR_MOVIES)){
+                movieType = Constants.GET_POPULAR_MOVIES;
+                currentPage =1;
+                noMoreDataOnServer = false;
+                moviesAdapter=null;
+                firstRecyclerView.removeAllViews();
+                movies.clear();
+                new FetchMoviesData(currentPage).execute(movieType);
+            }
+        }
+        else if(item.getItemId()==R.id.action_toprated_movies){
+            if(!movieType.equals(Constants.GET_TOP_RATED_MOVIES)){
+                movieType = Constants.GET_TOP_RATED_MOVIES;
+                currentPage =1;
+                noMoreDataOnServer = false;
+                moviesAdapter=null;
+                firstRecyclerView.removeAllViews();
+                movies.clear();
+                new FetchMoviesData(currentPage).execute(movieType);
+            }
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -91,6 +133,9 @@ public class FirstFragment extends Fragment {
         // Inflate the layout for this fragment
 
         View view = inflater.inflate(R.layout.fragment_first, container, false);
+        setHasOptionsMenu(true);
+         dbHandler = new DBHandler(getActivity());
+
         firstRecyclerView = (RecyclerView)view.findViewById(R.id.first_recycler_view);
         mPbar = (ProgressBar) view.findViewById(R.id.progress_bar);
         progressBarPaging = (ProgressBar) view.findViewById(R.id.progress_bar_paging);
@@ -98,11 +143,18 @@ public class FirstFragment extends Fragment {
         gridLayoutManager = new GridLayoutManager(getActivity(),2);
         firstRecyclerView.setLayoutManager(gridLayoutManager);
         if(Utils.networkConnectivity(getActivity()))
-            new FetchMoviesData(currentPage).execute(Constants.GET_POPULAR_MOVIES);
-        else
-            MainActivity.showSnackbar("No internet connection");
+            new FetchMoviesData(currentPage).execute(movieType);
+        else {
+            movies = dbHandler.getAllRecords();
+            Log.d(Constants.TAG,"movies size "+ movies.size());
+            if(movies!=null && movies.size()>0) {
+                moviesAdapter = new MoviesAdapter(getActivity(), movies);
+                firstRecyclerView.setAdapter(moviesAdapter);
+            }
+            HomeActivity.showSnackbar("No internet connection");
+        }
 
-        firstRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener(){
+       /* firstRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener(){
 
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
@@ -130,12 +182,12 @@ public class FirstFragment extends Fragment {
                     if (!loadingMore && (totalItemCount - visibleItemCount) <= (firstVisibleItem + visibleThreshold)) {
                         // End has been reached
                         currentPage++;
-                        new FetchMoviesData(currentPage).execute(Constants.GET_POPULAR_MOVIES);
+                        new FetchMoviesData(currentPage).execute(movieType);
                         loadingMore = true;
                     }
                 }
             }
-        });
+        });*/
 
         return view;
 
@@ -192,6 +244,8 @@ public class FirstFragment extends Fragment {
                    }*/
                    Response response = (new Gson()).fromJson(result, Response.class);
                    List<Movie> moviesReturned = response.results;
+                   dbHandler.deleteAllRecords();
+                   dbHandler.insertAllRecords(new ArrayList<Movie>(moviesReturned));
                    if(moviesReturned.size()<20)
                        noMoreDataOnServer = true;
                    movies.addAll(moviesReturned);
@@ -210,7 +264,7 @@ public class FirstFragment extends Fragment {
                    e.printStackTrace();
                }
            }else{
-               MainActivity.showSnackbar("Internet connection problem");
+               HomeActivity.showSnackbar("Internet connection problem");
            }
 
        }

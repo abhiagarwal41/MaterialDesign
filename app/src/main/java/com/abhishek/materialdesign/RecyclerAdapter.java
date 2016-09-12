@@ -1,6 +1,11 @@
 package com.abhishek.materialdesign;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.ActivityOptionsCompat;
+import android.support.v4.util.Pair;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,9 +21,11 @@ import java.util.List;
 public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private List<String> mItemList;
+    private Context context;
 
-    public RecyclerAdapter(List<String> itemList) {
+    public RecyclerAdapter(List<String> itemList,Context context) {
         mItemList = itemList;
+        this.context = context;
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -45,6 +52,14 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         ViewHolder holder = (ViewHolder) viewHolder;
         String itemText = mItemList.get(position);
         holder.mItemTextView.setText(itemText);
+
+        holder.mItemTextView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(context,ParallaxActivity.class);
+                 context.startActivity(intent);
+            }
+        });
     }
 
     @Override
