@@ -10,23 +10,41 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.graphics.Palette;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.transition.Fade;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.ImageView;
 import android.widget.RatingBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.google.android.youtube.player.YouTubeBaseActivity;
+import com.google.android.youtube.player.YouTubeInitializationResult;
+import com.google.android.youtube.player.YouTubePlayer;
+import com.google.android.youtube.player.YouTubePlayerSupportFragment;
+import com.google.gson.Gson;
 import com.squareup.picasso.Picasso;
 
-public class MovieDetailsActivity extends AppCompatActivity {
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class MovieDetailsActivity extends AppCompatActivity implements YouTubePlayer.OnInitializedListener {
 
     private CollapsingToolbarLayout collapsingToolbarLayout;
     private TextView movieTitle, movieDate, movieSynopsis;
+    private RecyclerView reviewsRecyclerView;
     private RatingBar movieRating;
     private ImageView movieImage;
     Context context;
+    YouTubePlayerSupportFragment frag;
+    ArrayList<String> trailers = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +62,11 @@ public class MovieDetailsActivity extends AppCompatActivity {
         movieSynopsis = (TextView)findViewById(R.id.movieSynopsis);
         movieRating = (RatingBar) findViewById(R.id.movieRating);
         movieImage = (ImageView)findViewById(R.id.movieImage);
+        reviewsRecyclerView = (RecyclerView)findViewById(R.id.reviews_recyclerview);
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this,LinearLayoutManager.VERTICAL, false);
+        reviewsRecyclerView.setLayoutManager(linearLayoutManager);
+
+        frag = (YouTubePlayerSupportFragment) getSupportFragmentManager().findFragmentById(R.id.youtube_fragment);
 
     }
 
@@ -62,29 +85,34 @@ public class MovieDetailsActivity extends AppCompatActivity {
         Picasso.with(context)
                 .load("http://image.tmdb.org/t/p/w185/" + movie.poster_path)
                 .into(movieImage);
-
-       /* ViewTreeObserver vto = movieImage.getViewTreeObserver();
-        vto.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
-            public boolean onPreDraw() {
-                movieImage.getViewTreeObserver().removeOnPreDrawListener(this);
-                int finalWidth = movieImage.getMeasuredWidth();
-                int finalHeight = movieImage.getMeasuredHeight();
-                Picasso.with(context)
-                        .load("http://image.tmdb.org/t/p/w185/" + movie.poster_path)
-                        .resize(finalWidth,finalHeight)
-                        .into(movieImage);
-
-                return true;
-            }
-        });*/
+        new FetchTrailers(this).execute(movie.id);
+        new FetchReviews().execute(movie.id);
 
     }
 
-    private void setupWindowAnimations() {
+    @Override
+    public void onInitializationSuccess(YouTubePlayer.Provider provider, YouTubePlayer player,
+                                        boolean wasRestored) {
+        if (!wasRestored) {
+            player.cueVideo(trailers.get(0));
+        }
+    }
+
+    @Override
+        public void onInitializationFailure (YouTubePlayer.Provider provider, YouTubeInitializationResult error) {
+            if (error.isUserRecoverableError()) {
+                //error.getErrorDialog(this, RECOVERY_DIALOG_REQUEST).show();
+            } else {
+                String errorMessage = error.toString();
+                Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show();
+            }
+        }
+
+  /*  private void setupWindowAnimations() {
         Fade fade = new Fade();
         fade.setDuration(1500);
         getWindow().setEnterTransition(fade);
-    }
+    }*/
 
     private void dynamicToolbarColor(Bitmap bitmap) {
 
@@ -121,6 +149,113 @@ public class MovieDetailsActivity extends AppCompatActivity {
             actionBar.setTitle(movieTitle);
         }
        // mToolbar.setTitleTextColor(getResources().getColor(android.R.color.white));
+    }
+
+    public void initializeYoutube(){
+        frag.initialize(Constants.DEVELOPER_KEY, this);
+    }
+
+    private class FetchTrailers extends AsyncTask<String,Void,String>{
+        Context context;
+
+        public FetchTrailers(){
+            super();
+        }
+
+        public FetchTrailers(Context context){
+           this.context = context;
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+            String movie_id = params[0];
+            String url= Constants.BASE_URL + Constants.GET_TRAILERS + "?api_key="+ Constants.MOVIEDB_API_KEY ;
+            url = url.replace("movie_id",movie_id);
+            System.out.println(url);
+            String response = Utils.sendGETRequest(url);
+            return response;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+
+
+            if (result != null && !"".equals(result) && !"error".equals(result)) {
+                try {
+
+                    JSONObject jsonObj = new JSONObject(result);
+                    JSONArray results = jsonObj.getJSONArray("results");
+                   for(int i=0;i<results.length();i++){
+                       JSONObject movie = results.getJSONObject(i);
+                       trailers.add(movie.getString("key"));
+                   }
+                    initializeYoutube();
+
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+            }else{
+                HomeActivity.showSnackbar("Internet connection problem");
+            }
+
+        }
+    }
+
+    private class FetchReviews extends AsyncTask<String,Void,String>{
+
+        public FetchReviews(){
+            super();
+        }
+
+
+        @Override
+        protected String doInBackground(String... params) {
+            String movie_id = params[0];
+            String url= Constants.BASE_URL + Constants.GET_REVIEWS + "?api_key="+ Constants.MOVIEDB_API_KEY ;
+            url = url.replace("movie_id",movie_id);
+            System.out.println(url);
+            String response = Utils.sendGETRequest(url);
+            return response;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+
+
+            if (result != null && !"".equals(result) && !"error".equals(result)) {
+                try {
+                    ArrayList<String> authors = new ArrayList<>();
+                    ArrayList<String> content = new ArrayList<>();
+                    JSONObject jsonObj = new JSONObject(result);
+                    JSONArray results = jsonObj.getJSONArray("results");
+                    for(int i=0;i<results.length();i++){
+                        JSONObject movie = results.getJSONObject(i);
+                        authors.add(movie.getString("author"));
+                        content.add(movie.getString("content"));
+                    }
+
+                    reviewsRecyclerView.setAdapter(new ReviewsAdapter(authors,content,context));
+
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+            }else{
+                HomeActivity.showSnackbar("Internet connection problem");
+            }
+
+        }
     }
 
     private class GetBitmapFromURLTask extends AsyncTask<String,Void,Bitmap>{

@@ -18,18 +18,16 @@ public class MyProvider extends ContentProvider {
 
     private DBHandler dbHandler;
     private static final String AUTHORITY = "com.abhishek.materialdesign";
-    private static final String MOVIES_BASE_PATH = "movie";
+    private static final String MOVIES_BASE_PATH = DBHandler.TABLE_NAME;
     static final String URL = "content://" + AUTHORITY + "/" + MOVIES_BASE_PATH;
-    public static final Uri CONTENT_URI = Uri.parse(URL);
+    public static final Uri MOVIES_URI = Uri.parse(URL);
 
     public static final int MOVIES = 100;
-    public static final int MOVIE_ID = 110;
 
-    private static final UriMatcher sURIMatcher = new UriMatcher(
+    private static final UriMatcher uriMatcher = new UriMatcher(
             UriMatcher.NO_MATCH);
     static {
-        sURIMatcher.addURI(AUTHORITY, MOVIES_BASE_PATH, MOVIES);
-        sURIMatcher.addURI(AUTHORITY, MOVIES_BASE_PATH + "/#", MOVIE_ID);
+        uriMatcher.addURI(AUTHORITY, MOVIES_BASE_PATH, MOVIES);
     }
 
     @Override
@@ -41,18 +39,12 @@ public class MyProvider extends ContentProvider {
     @Nullable
     @Override
     public String getType(Uri uri) {
-        switch (sURIMatcher.match(uri)){
+        switch (uriMatcher.match(uri)){
             /**
              * Get all movies records
              */
             case MOVIES:
                 return "vnd.android.cursor.dir/vnd.example.students";
-
-            /**
-             * Get a particular movie
-             */
-            case MOVIE_ID:
-                return "vnd.android.cursor.item/vnd.example.students";
 
             default:
                 throw new IllegalArgumentException("Unsupported URI: " + uri);
@@ -63,16 +55,12 @@ public class MyProvider extends ContentProvider {
     public Cursor query(Uri uri, String[] projection, String selection,
                         String[] selectionArgs, String sortOrder) {
         SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
-        queryBuilder.setTables(DBHandler.TABLE_NAME);
 
-        int uriType = sURIMatcher.match(uri);
+        int uriType = uriMatcher.match(uri);
         switch (uriType) {
-            case MOVIE_ID:
-                queryBuilder.appendWhere(DBHandler.COLUMN_ID + "="
-                        + uri.getLastPathSegment());
-                break;
+
             case MOVIES:
-                // no filter
+                queryBuilder.setTables(DBHandler.TABLE_NAME);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown URI");
@@ -86,22 +74,20 @@ public class MyProvider extends ContentProvider {
 
     @Override
     public Uri insert(Uri uri, ContentValues values) {
-        /**
-         * Add a new movie record
-         */
-        long rowID = dbHandler.getWritableDatabase().insert(	dbHandler.TABLE_NAME, "", values);
 
-        /**
-         * If record is added successfully
-         */
+        if(uriMatcher.match(uri)==MOVIES) {
+            long rowID = dbHandler.getWritableDatabase().insert(dbHandler.TABLE_NAME, "", values);
 
-        if (rowID > 0)
-        {
-            Uri _uri = ContentUris.withAppendedId(CONTENT_URI, rowID);
-            getContext().getContentResolver().notifyChange(_uri, null);
-            return _uri;
+            if (rowID > 0)  //If record is added successfully
+            {
+                Uri _uri = ContentUris.withAppendedId(MOVIES_URI, rowID);
+                getContext().getContentResolver().notifyChange(_uri, null);
+                return _uri;
+            }
+            throw new SQLException("Failed to add a record into " + uri);
         }
-        throw new SQLException("Failed to add a record into " + uri);
+
+        return null;
     }
 
     @Override

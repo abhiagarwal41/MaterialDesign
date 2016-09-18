@@ -13,7 +13,8 @@ public class MyReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         // TODO: This method is called when the BroadcastReceiver is receiving
         // an Intent broadcast.
-        Log.d(Constants.TAG, "I have no idea what the headset state is");
+        HomeActivity.showSnackbar("Broadcast received");
+        /*Log.d(Constants.TAG, "I have no idea what the headset state is");
 
         if (intent.getAction().equals(Intent.ACTION_HEADSET_PLUG)) {
             int state = intent.getIntExtra("state", -1);
@@ -28,7 +29,7 @@ public class MyReceiver extends BroadcastReceiver {
                     Log.d(Constants.TAG, "I have no idea what the headset state is");
             }
         }
-
+*/
         //throw new UnsupportedOperationException("Not yet implemented");
     }
 }

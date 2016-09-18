@@ -1,6 +1,10 @@
 package com.abhishek.materialdesign;
 
 
+import android.content.ContentValues;
+import android.content.res.Configuration;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -15,6 +19,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -117,6 +122,22 @@ public class FirstFragment extends Fragment {
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            gridLayoutManager = new GridLayoutManager(getActivity(),4);
+            firstRecyclerView.setLayoutManager(gridLayoutManager);
+            moviesAdapter = new MoviesAdapter(getActivity(), movies);
+            firstRecyclerView.setAdapter(moviesAdapter);
+
+        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT){
+            gridLayoutManager = new GridLayoutManager(getActivity(),2);
+            firstRecyclerView.setLayoutManager(gridLayoutManager);
+            moviesAdapter = new MoviesAdapter(getActivity(), movies);
+            firstRecyclerView.setAdapter(moviesAdapter);
+        }
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -145,12 +166,15 @@ public class FirstFragment extends Fragment {
         if(Utils.networkConnectivity(getActivity()))
             new FetchMoviesData(currentPage).execute(movieType);
         else {
-            movies = dbHandler.getAllRecords();
+           // movies = dbHandler.getAllRecords();
+            movies = fetchMovies();
             Log.d(Constants.TAG,"movies size "+ movies.size());
+
             if(movies!=null && movies.size()>0) {
                 moviesAdapter = new MoviesAdapter(getActivity(), movies);
                 firstRecyclerView.setAdapter(moviesAdapter);
             }
+
             HomeActivity.showSnackbar("No internet connection");
         }
 
@@ -244,8 +268,11 @@ public class FirstFragment extends Fragment {
                    }*/
                    Response response = (new Gson()).fromJson(result, Response.class);
                    List<Movie> moviesReturned = response.results;
-                   dbHandler.deleteAllRecords();
-                   dbHandler.insertAllRecords(new ArrayList<Movie>(moviesReturned));
+                  // dbHandler.deleteAllRecords();
+                  // dbHandler.insertAllRecords(new ArrayList<Movie>(moviesReturned));
+                   if(fetchMovies().size()==0)
+                    insertAllMovies(new ArrayList<Movie>(moviesReturned));
+
                    if(moviesReturned.size()<20)
                        noMoreDataOnServer = true;
                    movies.addAll(moviesReturned);
@@ -269,5 +296,45 @@ public class FirstFragment extends Fragment {
 
        }
    }
+
+    public void insertAllMovies(List<Movie> movies){
+         for(Movie movie : movies){
+             ContentValues contentValues = new ContentValues();
+             contentValues.put(DBHandler.COLUMN_ID, movie.id);
+             contentValues.put(DBHandler.COLUMN_TITLE, movie.original_title);
+             contentValues.put(DBHandler.COLUMN_POSTER_PATH, movie.poster_path);
+             contentValues.put(DBHandler.COLUMN_RELEASE_DATE, movie.release_date);
+             contentValues.put(DBHandler.COLUMN_OVERVIEW, movie.overview);
+             contentValues.put(DBHandler.COLUMN_RATING, movie.vote_average);
+
+             Uri uri = getActivity().getContentResolver().insert(
+                     MyProvider.MOVIES_URI, contentValues);
+         }
+    }
+
+    public List<Movie> fetchMovies() {
+
+        String URL = MyProvider.MOVIES_URI.toString();
+
+        Uri movies_uri = Uri.parse(URL);
+        Cursor c = getActivity().getContentResolver().query(movies_uri, null, null, null, null);
+        //Cursor c = getActivity().managedQuery(movies, null, null, null, "name");
+        LinkedList<Movie> movies = new LinkedList<>();
+
+        if (c.moveToFirst()) {
+            do{
+                Movie movie = new Movie();
+                movie.setId(c.getString(c.getColumnIndex(DBHandler.COLUMN_ID)));
+                movie.setOriginal_title(c.getString(c.getColumnIndex(DBHandler.COLUMN_TITLE)));
+                movie.setPoster_path(c.getString(c.getColumnIndex(DBHandler.COLUMN_POSTER_PATH)));
+                movie.setRelease_date(c.getString(c.getColumnIndex(DBHandler.COLUMN_RELEASE_DATE)));
+                movie.setOverview(c.getString(c.getColumnIndex(DBHandler.COLUMN_OVERVIEW)));
+                movie.setVote_average(c.getDouble(c.getColumnIndex(DBHandler.COLUMN_RATING)));
+                movies.add(movie);
+            } while (c.moveToNext());
+        }
+
+        return movies;
+    }
 
 }

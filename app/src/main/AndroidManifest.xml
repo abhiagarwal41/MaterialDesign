@@ -10,7 +10,6 @@
 
     <application
         android:allowBackup="true"
-        android:configChanges="orientation|keyboardHidden|screenSize"
         android:icon="@mipmap/ic_launcher"
         android:label="MyAPP"
         android:supportsRtl="true"
@@ -41,7 +40,14 @@
             android:authorities="com.abhishek.materialdesign"
             android:multiprocess="true" />
 
-        <activity android:name=".DictionaryActivity"></activity>
+        <activity android:name=".DictionaryActivity" />
+
+        <service
+            android:name=".MyIntentService"
+            android:exported="false" />
+
+        <activity android:name=".TabletActivity" />
+        <activity android:name=".DetailActivity"></activity>
     </application>
 
 </manifest>

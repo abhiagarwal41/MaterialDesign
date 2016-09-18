@@ -39,7 +39,6 @@ public class HomeActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
-
         coordinatorLayout = (CoordinatorLayout)findViewById(R.id.coordinatorLayout);
         fab = (FloatingActionButton) findViewById(R.id.fabButton);
 
@@ -166,11 +165,14 @@ public class HomeActivity extends AppCompatActivity
             Intent intent = new Intent(this,DictionaryActivity.class);
             this.startActivity(intent);
         } else if (id == R.id.nav_gallery) {
-
+            Intent intent = new Intent(this,MyIntentService.class);
+            startService(intent);
         } else if (id == R.id.nav_slideshow) {
-
+            Intent intent = new Intent(this,MyReceiver.class);
+            sendBroadcast(intent);
         } else if (id == R.id.nav_manage) {
-
+            Intent intent = new Intent(this,TabletActivity.class);
+            this.startActivity(intent);
         } else if (id == R.id.nav_share) {
 
         } else if (id == R.id.nav_send) {

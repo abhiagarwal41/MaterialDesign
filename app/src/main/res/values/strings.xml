@@ -10,4 +10,18 @@
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
     <string name="action_settings">Settings</string>
+
+    <!-- Android Version Names -->
+    <string-array name="stars_names">
+        <item>Robert Downey Jr</item>
+        <item>Tom Cruise</item>
+        <item>Brad Pitt</item>
+        <item>Angelina Jolie</item>
+        <item>George Clooney</item>
+        <item>Vin Diesel</item>
+        <item>Tom Hanks</item>
+        <item>Russel Crowe</item>
+        <item>Mila Kunis</item>
+    </string-array>
+
 </resources>
