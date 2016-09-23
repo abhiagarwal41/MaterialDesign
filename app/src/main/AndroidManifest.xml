@@ -6,14 +6,23 @@
     <uses-permission android:name="android.permission.NETWORK" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.READ_USER_DICTIONARY" />
 
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
-        android:label="MyAPP"
+        android:label="@string/title_activity_home"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="@string/google_api_key" />
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+
         <activity android:name=".MovieDetailsActivity" />
         <activity
             android:name=".HomeActivity"
@@ -47,7 +56,28 @@
             android:exported="false" />
 
         <activity android:name=".TabletActivity" />
-        <activity android:name=".DetailActivity"></activity>
+        <activity android:name=".DetailActivity" />
+        <activity android:name=".AlarmActivity" />
+
+        <receiver
+            android:name=".AlarmReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".DeviceBootReceiver"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <activity android:name=".MapsActivity"></activity>
+        <activity android:name=".SimpleActivity"></activity>
     </application>
 
 </manifest>

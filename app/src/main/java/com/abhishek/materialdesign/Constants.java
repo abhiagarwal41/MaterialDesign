@@ -14,5 +14,6 @@ public class Constants {
     public static String MOVIEDB_API_KEY = "e4d383de55ac490fa29a2f1ec97f4bb8";
     public static String TAG ="com.abhishek";
     public static String DEVELOPER_KEY = "AIzaSyC42zw-Gs-Z6Cel_l3GXWT-V49dLG7hyI8";
+    public static String GOOGLE_KEY = "AIzaSyC_eGzCT_U_6owTV0euQvTOr4a8bj0yE30";
 
 }

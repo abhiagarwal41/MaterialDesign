@@ -10,6 +10,7 @@
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
     <string name="action_settings">Settings</string>
+    <string name="google_api_key">AIzaSyC_eGzCT_U_6owTV0euQvTOr4a8bj0yE30</string>
 
     <!-- Android Version Names -->
     <string-array name="stars_names">
@@ -22,6 +23,10 @@
         <item>Tom Hanks</item>
         <item>Russel Crowe</item>
         <item>Mila Kunis</item>
+    </string-array>
+
+    <string-array name="places">
+        <item>movie_theater</item>
     </string-array>
 
 </resources>

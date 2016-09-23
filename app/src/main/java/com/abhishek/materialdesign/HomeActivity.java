@@ -174,8 +174,12 @@ public class HomeActivity extends AppCompatActivity
             Intent intent = new Intent(this,TabletActivity.class);
             this.startActivity(intent);
         } else if (id == R.id.nav_share) {
+            Intent intent = new Intent(this,AlarmActivity.class);
+            this.startActivity(intent);
 
         } else if (id == R.id.nav_send) {
+            Intent intent = new Intent(this,MapsActivity.class);
+            this.startActivity(intent);
 
         }
 
