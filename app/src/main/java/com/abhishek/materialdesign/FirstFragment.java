@@ -163,6 +163,7 @@ public class FirstFragment extends Fragment {
 
         gridLayoutManager = new GridLayoutManager(getActivity(),2);
         firstRecyclerView.setLayoutManager(gridLayoutManager);
+        firstRecyclerView.setHasFixedSize(true);
         if(Utils.networkConnectivity(getActivity()))
             new FetchMoviesData(currentPage).execute(movieType);
         else {
@@ -178,7 +179,7 @@ public class FirstFragment extends Fragment {
             HomeActivity.showSnackbar("No internet connection");
         }
 
-       /* firstRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener(){
+        firstRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener(){
 
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
@@ -191,8 +192,19 @@ public class FirstFragment extends Fragment {
                 super.onScrolled(recyclerView, dx, dy);
                 if(recyclerView.getAdapter() != null && !noMoreDataOnServer){
 
-                    mRecyclerViewHelper = RecyclerViewPositionHelper.createHelper(recyclerView);
-                    visibleItemCount = recyclerView.getChildCount();
+                    int th = 4;
+                    int count = gridLayoutManager.getItemCount();
+
+                    if (gridLayoutManager.findLastCompletelyVisibleItemPosition() >= count - th) {
+                        if (!loadingMore) {
+                            loadingMore = true;
+                            currentPage++;
+                            new FetchMoviesData(currentPage).execute(movieType);
+                        }
+                    }
+
+                   /*// mRecyclerViewHelper = RecyclerViewPositionHelper.createHelper(recyclerView);
+                    visibleItemCount = firstRecyclerView.getChildCount();
                     totalItemCount = gridLayoutManager.getItemCount();
                     firstVisibleItem = gridLayoutManager.findFirstVisibleItemPosition();
 
@@ -208,10 +220,10 @@ public class FirstFragment extends Fragment {
                         currentPage++;
                         new FetchMoviesData(currentPage).execute(movieType);
                         loadingMore = true;
-                    }
+                    }*/
                 }
             }
-        });*/
+        });
 
         return view;
 
@@ -252,6 +264,7 @@ public class FirstFragment extends Fragment {
        @Override
        protected void onPostExecute(String result) {
            super.onPostExecute(result);
+           loadingMore = false;
            if(currentPage==1)
                mPbar.setVisibility(View.GONE);
            else

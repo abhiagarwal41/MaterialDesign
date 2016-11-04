@@ -9,4 +9,5 @@
     <dimen name="nav_header_height">160dp</dimen>
     <!-- Default Parallax ImageView Height  -->
     <dimen name="size_default_height">160dp</dimen>
+    <dimen name="widget_margin">0dp</dimen>
 </resources>
